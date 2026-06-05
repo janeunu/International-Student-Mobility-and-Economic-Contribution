@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sheet 4 — Global Competition | FIT5147</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <article class="sheet sheet--allow-overflow">
+    <header class="sheet-header">
+      <p class="sheet-kicker">FIT5147 · Five Design Sheets · Sheet 4 of 5 · Alternative Design 3</p>
+      <h1 class="sheet-title">Global Competition — Comparative Dashboard</h1>
+      <p class="sheet-sub">International Student Mobility and Economic Contribution: Australia’s Position in the Global Education Market</p>
+    </header>
+
+    <div class="sheet-body">
+      <div class="meta-row">
+        <div class="meta-card">
+          <h3>Purpose</h3>
+          <p>Complete third dashboard: position Australia among major study destinations — rankings, international student share, trends, optional map — Australia always visually emphasised.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Intended audience</h3>
+          <p>Readers asking “how does Australia compare globally?” — strategy / internationalisation context.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Main message</h3>
+          <p>Australia is a leading destination with high internationalisation in many metrics; ranks and shares shift over time and depend on definitions.</p>
+        </div>
+      </div>
+
+      <div class="section-card" style="flex:1; min-height:0;">
+        <h2>Dashboard wireframe — full app</h2>
+        <div class="wireframe" style="flex:1; min-height:0;">
+          <span class="wire-label">Shiny UI mock</span>
+          <div class="grid-wf" style="height:100%; grid-template-rows: auto auto 1fr auto;">
+            <div class="ph ph-line" style="min-height:24px;">Title + peer set stated (e.g. AU · US · UK · CA · NZ · … — only if data support)</div>
+            <div class="controls-mock">
+              <span class="ctrl">Metric ▼</span>
+              <span class="ctrl">Year [====slider====]</span>
+              <span class="ctrl">Country multi-select</span>
+              <span class="ctrl">Pin Australia highlight</span>
+            </div>
+
+            <div class="grid-wf grid-wf-cols-3" style="gap:5px; min-height:0;">
+              <div class="ph ph-line" style="flex:1; min-height:0;">
+                Horizontal bar chart — latest year ranks<br />
+                <span style="font-size:7px; font-family:system-ui,sans-serif;">AU bar = accent colour (thicker)</span>
+              </div>
+              <div class="ph ph-line" style="flex:1; min-height:0;">
+                Ranking over time — bump chart / slope (AU line bold)</div>
+              <div class="grid-wf" style="grid-template-rows: 1fr auto; min-height:0;">
+                <div class="ph ph-map" style="flex:1;">Choropleth placeholder — world map, top destinations filled, others grey</div>
+                <div class="ph ph-small" style="margin-top:4px;">Optional: international student share of tertiary enrolments (small multiple)</div>
+              </div>
+            </div>
+
+            <div class="grid-wf grid-wf-cols-2" style="gap:5px;">
+              <div class="ph ph-small">Australia callout — 2 bullet insights + caveat on comparability</div>
+              <div class="ph ph-small">Footer: sources · definition differences across countries</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col" style="flex-shrink:0;">
+        <div class="section-card">
+          <h2>Recommended charts</h2>
+          <ul>
+            <li>Horizontal bar chart (rank / volume / share)</li>
+            <li>Bump or slope chart — rank over time</li>
+            <li>Choropleth map placeholder (legend, neutral ocean)</li>
+          </ul>
+          <p class="footer-note" style="border:0; padding:0; margin:0 0 4px; color:#006dae; font-weight:600;">Unique to Alt 4 (do not copy to Sheets 2 or 3): peers, ranks, maps, flows — no commence vs enrol, no revenue scatter.</p>
+          <h3>More graph variants (global / comparison)</h3>
+          <ul class="compact-ul">
+            <li><strong>Beeswarm / strip + jitter:</strong> one dot per country, x = students or share, y = jitter only — avoids bar overcrowding.</li>
+            <li><strong>Chord or arc diagram:</strong> stylised flows from world regions <em>into</em> Australia (if regional source data).</li>
+            <li><strong>Mirrored bars:</strong> AU left of axis, selected peer right — same metric, one row per year or metric.</li>
+            <li><strong>Faceted small-multiple maps:</strong> same choropleth repeated for 3–4 milestone years (slider swaps emphasis).</li>
+          </ul>
+          <h3>Illustration ideas (geo &amp; peers)</h3>
+          <ul class="compact-ul">
+            <li><strong>Compass rose</strong> in corner + subtle graticule (latitude lines) — never use on Sheets 2–3.</li>
+            <li><strong>“Orbit” diagram:</strong> AU fixed centre, peer nodes on a ring, line thickness = student link (schematic).</li>
+            <li><strong>Leader lines</strong> from highlighted map region to the ranked bar row for the same country.</li>
+          </ul>
+          <div class="graph-thumb-row graph-thumb-row--4" style="margin-top:4px;">
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><circle cx="10" cy="10" r="1.5" fill="#006dae"/><circle cx="14" cy="8" r="1.5" fill="#006dae"/><circle cx="22" cy="11" r="1.5" fill="#888"/><circle cx="26" cy="9" r="1.5" fill="#888"/><circle cx="32" cy="10" r="1.5" fill="#aaa"/></svg>
+              Beeswarm
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M20 9 Q8 4 6 9 Q8 14 20 9" fill="none" stroke="#006dae"/><path d="M20 9 Q32 4 34 9 Q32 14 20 9" fill="none" stroke="#888"/></svg>
+              Chord arcs
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="4" y="7" width="14" height="4" fill="#006dae"/><rect x="22" y="7" width="14" height="4" fill="#aaa"/><path d="M20 5 L20 13" stroke="#333"/></svg>
+              Mirror bars
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="2" y="4" width="8" height="10" fill="#e0e8ef" stroke="#999"/><rect x="12" y="4" width="8" height="10" fill="#dde5ee" stroke="#999"/><rect x="22" y="4" width="8" height="10" fill="#d0dce8" stroke="#999"/><rect x="32" y="4" width="6" height="10" fill="#c5d4e4" stroke="#999"/></svg>
+              Map facets
+            </div>
+          </div>
+          <h2>Interaction ideas</h2>
+          <ul>
+            <li>Map click ↔ table sync; metric dropdown; pin AU when filtering peers</li>
+          </ul>
+        </div>
+        <div class="section-card">
+          <h2>Colour &amp; typography</h2>
+          <p>Single strong accent for Australia; muted analogous colours for peers; avoid rainbow ramps on the map.</p>
+          <h2>Why this works / What to avoid</h2>
+          <p><strong>Works:</strong> Directly answers global positioning; interactions support exploration without losing the AU anchor.</p>
+          <p><strong>Avoid:</strong> Comparing incompatible national definitions without footnotes; cluttering with too many countries.</p>
+          <p class="footer-note" style="border:0; padding:0; margin-top:6px;"><strong>Draw on sheet:</strong> Sketch <strong>one</strong> Alt-4-only layout (beeswarm, chord, mirrors, or faceted maps); no revenue scatter or commence vs enrol on this sheet.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</body>
+</html>

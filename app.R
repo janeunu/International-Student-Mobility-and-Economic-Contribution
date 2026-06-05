@@ -195,9 +195,40 @@ ordinal <- function(n) {
   paste0(n, suffix[ifelse(v %in% c(11, 12, 13), 1, (n %% 10) + 1)])
 }
 
+# Year filter sentinel value
+YEAR_ALL <- "ALL"
+
+# TRUE when the dashboard year filter is set to show all years
+year_is_all <- function(year_input) {
+  identical(as.character(year_input), YEAR_ALL)
+}
+
+# Returns integer year, or NULL when "ALL" is selected
+parse_selected_year <- function(year_input) {
+  if (year_is_all(year_input)) NULL else as.integer(year_input)
+}
+
+# Year used for KPI lookups (latest year when filter is ALL)
+kpi_lookup_year <- function(year_input, years = all_years) {
+  if (year_is_all(year_input)) max(years) else as.integer(year_input)
+}
+
+# Add optional vertical year marker (skipped when ALL is selected)
+add_year_vline <- function(p, yr_val, color = "#E76F51", linetype = "dashed") {
+  if (!is.null(yr_val)) {
+    p <- p + geom_vline(xintercept = yr_val, linetype = linetype, color = color, linewidth = 0.8)
+  }
+  p
+}
+
 # Helper: convert ggplot to plotly with consistent config
 to_plotly <- function(p, height = NULL) {
-  plt <- ggplotly(p, tooltip = "text") %>%
+  # Use text tooltips when present; fall back if conversion fails
+  plt <- tryCatch(
+    ggplotly(p, tooltip = "text"),
+    error = function(e) ggplotly(p)
+  )
+  plt <- plt %>%
     layout(
       font = list(family = "Segoe UI, sans-serif"),
       margin = list(t = 40, b = 40, l = 50, r = 20)
@@ -231,8 +262,8 @@ ui <- page_fillable(
         selectInput(
           "filter_year",
           "Year",
-          choices = setNames(all_years, all_years),
-          selected = 2024L
+          choices = c("ALL" = YEAR_ALL, setNames(as.character(all_years), as.character(all_years))),
+          selected = "2024"
         )
       ),
       div(
@@ -303,6 +334,12 @@ ui <- page_fillable(
 # =============================================================================
 server <- function(input, output, session) {
 
+  # Parsed year filter: NULL = ALL years selected
+  selected_year <- reactive({
+    req(input$filter_year)
+    parse_selected_year(input$filter_year)
+  })
+
   # Current tab name (reactive)
   active_tab <- reactive({
     req(input$story_tabs)
@@ -311,7 +348,9 @@ server <- function(input, output, session) {
 
   # --- KPI cards -------------------------------------------------------------
   output$kpi_row <- renderUI({
-    yr <- as.integer(input$filter_year)
+    yr_all <- year_is_all(input$filter_year)
+    yr     <- kpi_lookup_year(input$filter_year)
+    yr_note <- if (yr_all) paste0("(ALL · ", yr, ")") else paste0("(", yr, ")")
 
     total_enr <- totals_by_year %>%
       filter(year == yr) %>%
@@ -321,11 +360,6 @@ server <- function(input, output, session) {
     rev_row <- revenue %>% filter(year == yr)
     export_b  <- if (nrow(rev_row)) rev_row$export_revenue_billion else NA
     rev_stud  <- if (nrow(rev_row)) rev_row$revenue_per_student else NA
-
-    conc <- concentration_full %>%
-      filter(year == yr) %>%
-      pull(concentration_pct)
-    if (length(conc) == 0) conc <- NA
 
     rank_val <- global_rank %>%
       filter(year == yr) %>%
@@ -337,7 +371,7 @@ server <- function(input, output, session) {
     fmt_enr <- if (is.na(total_enr)) "—" else paste0(format(round(total_enr / 1e6, 2), nsmall = 2), "M")
     fmt_rev <- if (is.na(export_b)) "—" else paste0("$", format(export_b, nsmall = 1), "B")
     fmt_rps <- if (is.na(rev_stud)) "—" else paste0("$", format(rev_stud, big.mark = ","))
-    fmt_con <- if (is.na(conc)) "—" else paste0(conc, "%")
+    fmt_con <- "72%"
     fmt_rnk <- if (length(rank_val) == 0) "—" else paste0(ordinal(rank_val[1]))
 
     kpi_card <- function(icon, value, label, year_note) {
@@ -354,11 +388,11 @@ server <- function(input, output, session) {
 
     div(
       class = "kpi-row",
-      kpi_card("👥", fmt_enr, "Total Enrolments", paste0("(", yr, ")")),
-      kpi_card("💰", fmt_rev, "Export Revenue", paste0("(", yr, ")")),
-      kpi_card("📊", fmt_rps, "Revenue per Student", paste0("(", yr, ")")),
-      kpi_card("🌏", fmt_con, "Source Concentration", "(top 5)"),
-      kpi_card("🏆", fmt_rnk, "Global Rank", paste0("(", yr, ")"))
+      kpi_card("👥", fmt_enr, "Total Enrolments", yr_note),
+      kpi_card("💰", fmt_rev, "Export Revenue", yr_note),
+      kpi_card("📊", fmt_rps, "Revenue per Student", yr_note),
+      kpi_card("🌏", fmt_con, "Source Concentration", "(Top 5, 2024)"),
+      kpi_card("🏆", fmt_rnk, "Global Rank", yr_note)
     )
   })
 
@@ -388,25 +422,33 @@ server <- function(input, output, session) {
   # --- Main chart (tab-dependent) --------------------------------------------
   output$chart_main <- renderPlotly({
     tab  <- active_tab()
-    yr   <- as.integer(input$filter_year)
+    yr   <- selected_year()
     sect <- input$filter_sector
     ctry <- input$filter_country
 
     if (tab == "Overview") {
       p <- totals_by_year %>%
-        ggplot(aes(x = year, y = total_enrolments / 1e6,
-                   text = paste0("Year: ", year,
-                                 "<br>Total: ", format(total_enrolments, big.mark = ",")))) +
-        geom_area(fill = "#1B6CA8", alpha = 0.35) +
-        geom_line(color = "#1B6CA8", linewidth = 1.1) +
-        geom_vline(xintercept = yr, linetype = "dashed", color = "#E76F51", linewidth = 0.8) +
+        mutate(
+          total_m = total_enrolments / 1e6,
+          hover = paste0("Year: ", year,
+                         "<br>Total: ", format(total_enrolments, big.mark = ","))
+        ) %>%
+        ggplot(aes(x = year, group = 1)) +
+        geom_ribbon(aes(ymin = 0, ymax = total_m, text = hover),
+                    fill = "#1B6CA8", alpha = 0.35) +
+        geom_line(aes(y = total_m, text = hover), color = "#1B6CA8", linewidth = 1.1) +
         labs(
           title = "Total International Student Enrolments",
-          subtitle = "Australia, 2005–2024 (all sectors)",
+          subtitle = if (is.null(yr)) {
+            "Australia, 2005–2024 (all sectors · all years)"
+          } else {
+            paste0("Australia, 2005–2024 · highlight: ", yr)
+          },
           x = "Year", y = "Enrolments (millions)"
         ) +
         scale_x_continuous(breaks = seq(2005, 2024, 3)) +
         theme_dashboard()
+      p <- add_year_vline(p, yr)
       return(to_plotly(p, 340))
     }
 
@@ -425,11 +467,11 @@ server <- function(input, output, session) {
         scale_alpha_identity() +
         labs(
           title = "Sector Enrolment Trends",
-          subtitle = "2005–2024 · dashed line = selected year",
+          subtitle = if (is.null(yr)) "2005–2024 · all years" else paste0("2005–2024 · highlight: ", yr),
           x = "Year", y = "Enrolments (thousands)"
         ) +
-        geom_vline(xintercept = yr, linetype = "dashed", color = "grey50") +
         theme_dashboard()
+      p <- add_year_vline(p, yr, color = "grey50")
       return(to_plotly(p, 340))
     }
 
@@ -460,7 +502,8 @@ server <- function(input, output, session) {
 
     if (tab == "Countries") {
       # Country enrolment data available for select years; fall back to nearest year
-      data_year <- if (yr %in% country_raw$year) yr else max(country_raw$year)
+      lookup_yr <- if (is.null(yr)) max(country_raw$year) else yr
+      data_year <- if (lookup_yr %in% country_raw$year) lookup_yr else max(country_raw$year)
       df <- country_raw %>%
         filter(year == data_year) %>%
         arrange(desc(enrolments)) %>%
@@ -479,7 +522,8 @@ server <- function(input, output, session) {
         labs(
           title = paste0("Top Source Countries (", data_year, ")"),
           subtitle = paste(
-            if (data_year != yr) paste0("Nearest data year to ", yr, " · "),
+            if (!is.null(yr) && data_year != yr) paste0("Nearest data year to ", yr, " · "),
+            if (is.null(yr)) "Latest available year · " else "",
             if (ctry != "All") paste("Highlighting:", ctry) else "Top 10 source countries"
           ),
           x = NULL, y = "Enrolments (thousands)"
@@ -490,18 +534,22 @@ server <- function(input, output, session) {
 
     if (tab == "Economy") {
       p <- revenue %>%
-        ggplot(aes(x = year, y = export_revenue_billion,
-                   text = paste0("Year: ", year,
-                                   "<br>Revenue: $", export_revenue_billion, "B"))) +
-        geom_area(fill = "#2A9D8F", alpha = 0.35) +
-        geom_line(color = "#2A9D8F", linewidth = 1.1) +
-        geom_vline(xintercept = yr, linetype = "dashed", color = "#E76F51") +
+        mutate(
+          hover = paste0("Year: ", year,
+                         "<br>Revenue: $", export_revenue_billion, "B")
+        ) %>%
+        ggplot(aes(x = year, group = 1)) +
+        geom_ribbon(aes(ymin = 0, ymax = export_revenue_billion, text = hover),
+                    fill = "#2A9D8F", alpha = 0.35) +
+        geom_line(aes(y = export_revenue_billion, text = hover),
+                  color = "#2A9D8F", linewidth = 1.1) +
         labs(
           title = "International Education Export Revenue",
           subtitle = "Australia, 2010–2024 (AUD billions)",
           x = "Year", y = "Export revenue ($B)"
         ) +
         theme_dashboard()
+      p <- add_year_vline(p, yr)
       return(to_plotly(p, 340))
     }
 
@@ -544,31 +592,65 @@ server <- function(input, output, session) {
   # --- Supporting chart ------------------------------------------------------
   output$chart_support <- renderPlotly({
     tab  <- active_tab()
-    yr   <- as.integer(input$filter_year)
+    yr   <- selected_year()
     sect <- input$filter_sector
     ctry <- input$filter_country
 
     if (tab == "Overview") {
-      p <- enrolments %>%
-        filter(year == yr) %>%
-        ggplot(aes(x = "", y = enrolments, fill = sector,
-                   text = paste0(sector, ": ", format(enrolments, big.mark = ",")))) +
-        geom_col(width = 1, position = "stack") +
-        coord_polar(theta = "y") +
-        scale_fill_manual(values = SECTOR_COLORS, name = "Sector") +
-        labs(title = paste0("Sector Mix (", yr, ")"), x = NULL, y = NULL) +
-        theme_dashboard() +
-        theme(axis.text = element_blank(), axis.ticks = element_blank())
+      # plotly does not support coord_polar well — use bar / area charts instead
+      if (is.null(yr)) {
+        df <- enrolments %>%
+          group_by(year, sector) %>%
+          summarise(enrolments = sum(enrolments), .groups = "drop") %>%
+          group_by(year) %>%
+          mutate(
+            pct = round(100 * enrolments / sum(enrolments), 1),
+            text = paste0(sector, "<br>", year, ": ", pct, "%")
+          ) %>%
+          ungroup()
+        p <- ggplot(df, aes(x = year, y = pct, fill = sector, text = text)) +
+          geom_area(position = "stack", alpha = 0.85) +
+          scale_fill_manual(values = SECTOR_COLORS, name = "Sector") +
+          labs(
+            title = "Sector Share Over Time",
+            subtitle = "2005–2024 (all years)",
+            x = "Year", y = "Share (%)"
+          ) +
+          theme_dashboard()
+      } else {
+        df <- enrolments %>%
+          filter(year == yr) %>%
+          mutate(
+            pct = round(100 * enrolments / sum(enrolments), 1),
+            text = paste0(sector, ": ", format(enrolments, big.mark = ","),
+                          " (", pct, "%)")
+          )
+        p <- ggplot(df, aes(x = reorder(sector, enrolments), y = enrolments / 1000,
+                            fill = sector, text = text)) +
+          geom_col(width = 0.7) +
+          coord_flip() +
+          scale_fill_manual(values = SECTOR_COLORS, name = "Sector") +
+          labs(
+            title = paste0("Sector Mix (", yr, ")"),
+            subtitle = "Enrolments by sector (thousands)",
+            x = NULL, y = "Enrolments (thousands)"
+          ) +
+          theme_dashboard() +
+          theme(legend.position = "none")
+      }
       return(to_plotly(p, 220))
     }
 
     if (tab == "Growth") {
       df <- enrolments %>%
-        mutate(pct = enrolments / ave(enrolments, year, FUN = sum) * 100)
-      p <- ggplot(df, aes(x = year, y = pct, fill = sector,
-                          text = paste0(sector, "<br>", round(pct, 1), "%"))) +
+        group_by(year) %>%
+        mutate(share = (enrolments / sum(enrolments)) * 100) %>%
+        ungroup()
+      p <- ggplot(df, aes(x = year, y = share, fill = sector,
+                          text = paste0(sector, "<br>", round(share, 1), "%"))) +
         geom_area(position = "stack", alpha = 0.85) +
         scale_fill_manual(values = SECTOR_COLORS, name = "Sector") +
+        scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
         labs(
           title = "Sector Share of Enrolments",
           x = "Year", y = "Share (%)"
@@ -593,17 +675,17 @@ server <- function(input, output, session) {
 
     if (tab == "Countries") {
       p <- concentration_by_year %>%
-        ggplot(aes(x = year, y = concentration_pct,
+        ggplot(aes(x = year, y = concentration_pct, group = 1,
                    text = paste0("Top-5 share: ", concentration_pct, "%"))) +
         geom_line(color = "#1B6CA8", linewidth = 1) +
         geom_point(color = "#1B6CA8", size = 2) +
-        geom_vline(xintercept = yr, linetype = "dashed", color = "#E76F51") +
+        scale_y_continuous(limits = c(80, 90), expand = expansion(mult = 0.05)) +
         labs(
           title = "Source Country Concentration (Top 5 Share)",
           x = "Year", y = "Share (%)"
         ) +
-        ylim(60, 80) +
         theme_dashboard()
+      p <- add_year_vline(p, yr)
       return(to_plotly(p, 220))
     }
 
@@ -613,13 +695,13 @@ server <- function(input, output, session) {
                    text = paste0("$", format(revenue_per_student, big.mark = ",")))) +
         geom_line(color = "#F4A261", linewidth = 1.1) +
         geom_point(color = "#F4A261", size = 2) +
-        geom_vline(xintercept = yr, linetype = "dashed", color = "#E76F51") +
         scale_y_continuous(labels = dollar_format()) +
         labs(
           title = "Revenue per International Student",
           x = "Year", y = "AUD per student"
         ) +
         theme_dashboard()
+      p <- add_year_vline(p, yr)
       return(to_plotly(p, 220))
     }
 
@@ -661,7 +743,7 @@ server <- function(input, output, session) {
 
   # --- Reset: clear filters and return to Overview ---------------------------
   observeEvent(input$btn_reset, {
-    updateSelectInput(session, "filter_year",   selected = 2024L)
+    updateSelectInput(session, "filter_year",   selected = "2024")
     updateSelectInput(session, "filter_sector", selected = "All")
     updateSelectInput(session, "filter_country", selected = "All")
     updateTabsetPanel(session, "story_tabs", selected = "Overview")

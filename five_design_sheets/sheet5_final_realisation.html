@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sheet 5 — Final Realisation | FIT5147</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <article class="sheet sheet--dense sheet--allow-overflow">
+    <header class="sheet-header">
+      <p class="sheet-kicker">FIT5147 · Five Design Sheets · Sheet 5 of 5 · Final Realisation</p>
+      <h1 class="sheet-title">Final Combined Dashboard — Story + Depth</h1>
+      <p class="sheet-sub">International Student Mobility and Economic Contribution: Australia’s Position in the Global Education Market</p>
+    </header>
+
+    <div class="sheet-body">
+      <div class="meta-row">
+        <div class="meta-card">
+          <h3>Purpose</h3>
+          <p>Combine <strong>selected</strong> modules from Alternatives 2–4 (each sheet lists ideas unique to that alternative) plus concentration from Sheet 1 or a new sketch — sources, limitations, Shiny controls.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Intended audience</h3>
+          <p>FIT5147 marker / supervisor; also a curious general reader if shared.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Main message</h3>
+          <p>What happened (growth &amp; COVID) → why it matters (exports &amp; intensity) → risks (concentration) → global context — in one coherent app.</p>
+        </div>
+      </div>
+
+      <div class="section-card" style="flex:1; min-height:0;">
+        <h2>Final dashboard wireframe — R Shiny (combined)</h2>
+        <div class="wireframe" style="flex:1; min-height:0;">
+          <span class="wire-label">Merge only what you select from Alt 2, 3, 4</span>
+          <div class="grid-wf" style="height:100%; grid-template-rows: auto auto auto auto 1fr auto auto;">
+            <div class="ph ph-line" style="min-height:28px;">
+              <strong>Hero:</strong> project title · short user guidance (“Follow tabs: Story → Economy → Concentration → Global → Data”)
+            </div>
+            <div class="nav-mock">
+              <span class="nav-pill active">Story</span>
+              <span class="nav-pill">Economy</span>
+              <span class="nav-pill">Concentration</span>
+              <span class="nav-pill">Global</span>
+              <span class="nav-pill">Data &amp; limits</span>
+            </div>
+            <div class="controls-mock">
+              <span class="ctrl">sliderInput: year range</span>
+              <span class="ctrl">checkboxGroup: sectors</span>
+              <span class="ctrl">selectInput: metrics</span>
+              <span class="ctrl">bookmarkButton</span>
+              <span class="ctrl">plotly hover / brush → KPIs</span>
+            </div>
+
+            <div class="grid-wf grid-wf-cols-6" style="gap:4px;">
+              <div class="ph ph-kpi" style="min-height:36px;"><span>KPI</span> Enrolments</div>
+              <div class="ph ph-kpi" style="min-height:36px;"><span>KPI</span> vs baseline</div>
+              <div class="ph ph-kpi" style="min-height:36px;"><span>KPI</span> Exports</div>
+              <div class="ph ph-kpi" style="min-height:36px;"><span>KPI</span> Rev/student</div>
+              <div class="ph ph-kpi" style="min-height:36px;"><span>KPI</span> Top-2 share</div>
+              <div class="ph ph-kpi" style="min-height:36px;"><span>KPI</span> Global rank</div>
+            </div>
+
+            <div class="grid-wf" style="grid-template-rows: 1fr 1fr 1fr; gap:4px; min-height:0;">
+              <div class="grid-wf grid-wf-cols-2" style="gap:4px;">
+                <div class="ph ph-line" style="flex:1;"><strong>① Story (from Alt 2)</strong> — e.g. era ribbon + total line, or slopegraph sectors, or commence vs enrol (pick one path)</div>
+                <div class="ph ph-line" style="flex:1;">Optional: second narrative panel only if space (else drop)</div>
+              </div>
+              <div class="grid-wf grid-wf-cols-2" style="gap:4px;">
+                <div class="ph ph-line" style="flex:1;"><strong>② Economy (from Alt 3)</strong> — e.g. faceted scatter by period, or marginal rugs, or rolling correlation (pick one path)</div>
+                <div class="ph ph-line" style="flex:1;">KPI row + revenue / student lines (keep if Alt 3 chosen)</div>
+              </div>
+              <div class="grid-wf grid-wf-cols-3" style="gap:4px;">
+                <div class="ph ph-line" style="flex:1;"><strong>③ Concentration</strong> — not in Alts 2–4; take from Sheet 1 brainstorm or design fresh (top-N + curve)</div>
+                <div class="ph ph-line" style="flex:1;"><strong>④ Global (from Alt 4)</strong> — e.g. beeswarm, chord, mirror bars, or faceted maps (pick one path; bars/bump/map from wireframe still valid)</div>
+                <div class="ph ph-map" style="flex:1; min-height:44px;">Map optional (small)</div>
+              </div>
+            </div>
+
+            <div class="ph ph-small" style="min-height:28px;"><strong>Data sources &amp; limitations</strong> — bullets: definitions, time alignment, non-causal wording, country comparability</div>
+            <div class="ph ph-small" style="min-height:20px;">Modules: <code>mod_timeline</code> · <code>mod_economy</code> · <code>mod_concentration</code> · <code>mod_global</code> — reactive: inputs → filtered data → outputs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col" style="flex-shrink:0;">
+        <div class="section-card">
+          <h2>R Shiny interaction plan</h2>
+          <ul>
+            <li>Global: year range, sectors, metrics; bookmarkable state</li>
+            <li>Linked brushing: time series selection updates KPI cards</li>
+            <li>Tooltips: plain-language definitions (commencement, export scope)</li>
+            <li>Optional: first-visit help text (orientation only)</li>
+          </ul>
+          <h3>How to merge (you choose)</h3>
+          <ul class="compact-ul">
+            <li><strong>Alt 2 only supplies</strong> the time narrative (growth / COVID / recovery / sectors / commence vs enrol). Do not paste Alt 4’s map motifs here unless you deliberately add a global tab.</li>
+            <li><strong>Alt 3 only supplies</strong> KPIs + revenue + association views (scatter, margins, facets, rolling <em>r</em>, B–A). Do not duplicate Alt 2’s slopegraph unless you relabel it clearly as economics.</li>
+            <li><strong>Alt 4 only supplies</strong> peer comparison (bars, bump, choropleth, beeswarm, chord, mirrors, faceted maps). Do not move revenue scatter into this tab.</li>
+            <li><strong>Concentration</strong> is a separate decision: pull from Sheet 1 ideas or a new sketch — it is not owned by Alts 2–4 in this pack.</li>
+          </ul>
+        </div>
+        <div class="section-card">
+          <h2>Colour &amp; typography / Why / Avoid</h2>
+          <p>Off-white ground, charcoal type, <strong>one accent</strong> for Australia and primary actions; sector palette colorblind-safe.</p>
+          <p><strong>Works:</strong> Clear story order; badges trace back to Sheets 2–4; supervisor can see convergence.</p>
+          <p><strong>Avoid:</strong> Four disconnected tabs with no copy glue; sensationalising concentration; implying rankings are strictly comparable.</p>
+          <h3>Illustration glue (after you pick alts)</h3>
+          <ul class="compact-ul">
+            <li>Use <strong>only</strong> the illustration language of the alternatives you selected (e.g. film-strip + journey <em>or</em> watermark + funnel <em>or</em> compass + orbit — avoid mixing all three).</li>
+            <li>One shared <strong>hero motif</strong> (your choice); tab icons echo that motif at smaller size.</li>
+            <li>Data tab: simple document-stack line icon + limitations bullets.</li>
+          </ul>
+          <div class="graph-thumb-row graph-thumb-row--6" style="margin-top:4px;">
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="4" y="5" width="8" height="10" fill="#eee"/><rect x="14" y="5" width="8" height="10" fill="#eee"/><rect x="24" y="5" width="8" height="10" fill="#e6f2f9" stroke="#006dae"/></svg>
+              Alt 2 slot
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="6" y="4" width="8" height="10" fill="#fff" stroke="#006dae"/><path d="M18 8 L34 8" stroke="#888"/></svg>
+              Alt 3 slot
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><circle cx="14" cy="9" r="4" fill="none" stroke="#006dae"/><circle cx="26" cy="9" r="2" fill="#888"/></svg>
+              Alt 4 slot
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M4 14 L12 8 L20 12 L28 6 L36 10" fill="none" stroke="#444"/></svg>
+              Concentr.
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="4" y="5" width="10" height="10" fill="#fff" stroke="#006dae"/><rect x="18" y="7" width="10" height="8" fill="#fff" stroke="#888"/></svg>
+              KPIs
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M6 4 L34 4 L34 14 L6 14 Z" fill="none" stroke="#999" stroke-dasharray="2 1"/></svg>
+              Data tab
+            </div>
+          </div>
+          <p class="footer-note" style="border:0; padding:0; margin-top:4px;"><strong>Draw on sheet:</strong> Tick your chosen Alt 2 / 3 / 4 panels; mark “reject” on the rest; show arrows into Sheet 5 wireframe only for winners.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</body>
+</html>

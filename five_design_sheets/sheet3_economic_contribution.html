@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sheet 3 — Economic Contribution | FIT5147</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <article class="sheet sheet--allow-overflow">
+    <header class="sheet-header">
+      <p class="sheet-kicker">FIT5147 · Five Design Sheets · Sheet 3 of 5 · Alternative Design 2</p>
+      <h1 class="sheet-title">Economic Contribution — Analytical Dashboard</h1>
+      <p class="sheet-sub">International Student Mobility and Economic Contribution: Australia’s Position in the Global Education Market</p>
+    </header>
+
+    <div class="sheet-body">
+      <div class="meta-row">
+        <div class="meta-card">
+          <h3>Purpose</h3>
+          <p>Complete second dashboard: KPIs, revenue trends, revenue per student, and association between enrolments and education export revenue — with cautious wording.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Intended audience</h3>
+          <p>Analysts, economics-minded supervisors; readers who expect methods and caveats.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Main message</h3>
+          <p>Scale and revenue move together over time (<em>associated with</em>, not “caused by”); COVID years stand out; revenue per student tracks changing intensity.</p>
+        </div>
+      </div>
+
+      <div class="section-card" style="flex:1; min-height:0;">
+        <h2>Dashboard wireframe — full app</h2>
+        <div class="wireframe" style="flex:1; min-height:0;">
+          <span class="wire-label">Shiny UI mock</span>
+          <div class="grid-wf" style="height:100%; grid-template-rows: auto auto 1fr auto;">
+            <div class="ph ph-line" style="min-height:24px;">Dashboard title + subtitle: “Education exports and international enrolments — exploratory association”</div>
+
+            <div class="grid-wf grid-wf-cols-4" style="gap:5px;">
+              <div class="ph ph-kpi"><span>KPI</span> Latest exports ($)</div>
+              <div class="ph ph-kpi"><span>KPI</span> Latest enrolments</div>
+              <div class="ph ph-kpi"><span>KPI</span> Revenue / student</div>
+              <div class="ph ph-kpi"><span>KPI</span> vs pre-COVID index</div>
+            </div>
+
+            <div class="grid-wf grid-wf-cols-2" style="gap:5px; min-height:0;">
+              <div class="grid-wf" style="grid-template-rows: 1fr 1fr; min-height:0;">
+                <div class="ph ph-line" style="flex:1;">Revenue trend — line (education-related exports)</div>
+                <div class="ph ph-line" style="flex:1;">Revenue per international student — line (define denominator)</div>
+              </div>
+              <div class="ph ph-line" style="flex:1; min-height:0;">
+                Scatterplot: enrolments (x) vs export revenue (y), each point = year<br />
+                <span style="font-size:7px; font-family:system-ui,sans-serif;">● COVID years highlighted · — optional regression line (label: illustrative fit)</span>
+              </div>
+            </div>
+
+            <div class="controls-mock">
+              <span class="ctrl">Brush years</span>
+              <span class="ctrl">Toggle: show regression</span>
+              <span class="ctrl">Highlight COVID cluster</span>
+              <span class="ctrl">Metric / FY vs CY note</span>
+            </div>
+            <div class="ph ph-small" style="margin-top:4px;">Interpretation panel: “associated with” · FX · scope of export series · alignment of periods</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col" style="flex-shrink:0;">
+        <div class="section-card">
+          <h2>Recommended charts</h2>
+          <ul>
+            <li>KPI cards (+ optional sparklines)</li>
+            <li>Time series: export revenue; revenue per student</li>
+            <li>Scatter with regression line; COVID years visually distinct</li>
+          </ul>
+          <p class="footer-note" style="border:0; padding:0; margin:0 0 4px; color:#006dae; font-weight:600;">Unique to Alt 3 (do not copy to Sheets 2 or 4): KPIs, revenue, association, uncertainty — no country ranking, no map.</p>
+          <h3>More graph variants (quant / association)</h3>
+          <ul class="compact-ul">
+            <li><strong>Marginal histograms:</strong> rug + small h/v bars on scatter edges (enrolments vs exports).</li>
+            <li><strong>Faceted scatter by period:</strong> three panels — pre-COVID | COVID | post — same x/y scales.</li>
+            <li><strong>Rolling correlation:</strong> moving window of correlation between growth in enrolments and growth in exports.</li>
+            <li><strong>Bland–Altman–style plot:</strong> if two related revenue measures exist — difference vs mean to show agreement.</li>
+          </ul>
+          <h3>Illustration ideas (methods &amp; numbers)</h3>
+          <ul class="compact-ul">
+            <li>Light watermark: <strong>“association ≠ causation”</strong> (once, low opacity).</li>
+            <li><strong>Funnel or ribbon</strong> on the regression line = prediction interval (not a map funnel).</li>
+            <li><strong>Unit ladder sketch</strong> beside axes ($, students) — reinforces definitions, not geography.</li>
+          </ul>
+          <div class="graph-thumb-row graph-thumb-row--4" style="margin-top:4px;">
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="2" y="12" width="36" height="4" fill="#eee"/><rect x="2" y="2" width="4" height="16" fill="#eee"/><circle cx="14" cy="9" r="1.5" fill="#006dae"/><circle cx="24" cy="7" r="1.5" fill="#c00"/></svg>
+              Scatter + rugs
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="2" y="3" width="10" height="12" fill="none" stroke="#888"/><rect x="14" y="3" width="10" height="12" fill="none" stroke="#888"/><rect x="26" y="3" width="10" height="12" fill="none" stroke="#006dae"/></svg>
+              Facet 3×
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M2 10 L10 6 L18 12 L26 5 L34 11 L38 8" fill="none" stroke="#006dae"/><path d="M2 14 L38 14" stroke="#ccc"/></svg>
+              Rolling r
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M4 10 L36 8" stroke="#999"/><circle cx="12" cy="9" r="1.5" fill="#006dae"/><circle cx="28" cy="7" r="1.5" fill="#006dae"/><path d="M10 4 L30 14" fill="none" stroke="#006dae" opacity="0.4" stroke-width="3"/></svg>
+              B–A style
+            </div>
+          </div>
+          <h2>Interaction ideas</h2>
+          <ul>
+            <li>Hover year + footnote; brush scatter to filter KPI period</li>
+            <li>Checkbox: show/hide fitted line and confidence band (if implemented)</li>
+          </ul>
+        </div>
+        <div class="section-card">
+          <h2>Colour &amp; typography</h2>
+          <p>Muted point cloud; bold only for COVID points; tabular lining for currency; titles use “co-moves”, “associated”, not “drives”.</p>
+          <h2>Why this works / What to avoid</h2>
+          <p><strong>Works:</strong> KPIs orient non-specialists; scatter + per-student line covers aggregate and intensity.</p>
+          <p><strong>Avoid:</strong> Causal language; dual y-axis implying false equivalence; mixing fiscal/calendar years without note.</p>
+          <p class="footer-note" style="border:0; padding:0; margin-top:6px;"><strong>Draw on sheet:</strong> Red-box “wording guardrails”; sketch <strong>one</strong> Alt-3-only graph (e.g. faceted scatter or rolling <em>r</em>) — do not copy Alt 2’s film-strip or Alt 4’s map motifs here.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</body>
+</html>

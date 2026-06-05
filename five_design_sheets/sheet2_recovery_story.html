@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sheet 2 — Recovery Story | FIT5147</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <article class="sheet sheet--allow-overflow">
+    <header class="sheet-header">
+      <p class="sheet-kicker">FIT5147 · Five Design Sheets · Sheet 2 of 5 · Alternative Design 1</p>
+      <h1 class="sheet-title">Australia’s Recovery Story — Linear Narrative Dashboard</h1>
+      <p class="sheet-sub">International Student Mobility and Economic Contribution: Australia’s Position in the Global Education Market</p>
+    </header>
+
+    <div class="sheet-body">
+      <div class="meta-row">
+        <div class="meta-card">
+          <h3>Purpose</h3>
+          <p>One complete dashboard: a clear time-based story for a general audience — growth, COVID disruption, recovery, sectors, flows vs stock.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Intended audience</h3>
+          <p>Educated public, policy brief readers, markers who value narrative clarity.</p>
+        </div>
+        <div class="meta-card">
+          <h3>Main message</h3>
+          <p>Australia’s international enrolments grew, were hit unevenly by COVID, and recovered by sector; commencements and enrolments tell different parts of the story.</p>
+        </div>
+      </div>
+
+      <div class="section-card" style="flex:1; min-height:0;">
+        <h2>Dashboard wireframe — full app (single scroll or story steps)</h2>
+        <div class="wireframe" style="flex:1; min-height:0;">
+          <span class="wire-label">Shiny UI mock</span>
+          <div class="grid-wf" style="height:100%; grid-template-rows: auto minmax(0,1fr) auto auto; gap:5px;">
+            <div>
+              <div class="ph ph-line" style="min-height:26px;">App title + one-line intro (“What happened to international students in Australia?”)</div>
+              <div class="controls-mock" style="margin-top:4px;">
+                <span class="ctrl">Year range</span>
+                <span class="ctrl">[====slider====]</span>
+                <span class="ctrl">Sectors on/off</span>
+                <span class="ctrl">Story: &lt;&lt; Prev | Next &gt;&gt;</span>
+              </div>
+            </div>
+
+            <div class="grid-wf grid-wf-cols-2" style="gap:5px; min-height:0;">
+              <div class="grid-wf" style="grid-template-rows: 1fr auto;">
+                <div class="ph ph-line" style="flex:1;">① Total enrolments — line/area (shade COVID era)</div>
+                <div class="arrow-down">↓ growth → shock → recovery</div>
+              </div>
+              <div class="grid-wf" style="grid-template-rows: auto 1fr;">
+                <div class="ph ph-small" style="min-height:22px;">② COVID chapter strip (key dates / annotations)</div>
+                <div class="ph ph-line" style="flex:1;">③ Sector comparison — 4 lines or stacked area (HE, VET, ELICOS, Schools)</div>
+              </div>
+            </div>
+
+            <div class="grid-wf" style="grid-template-rows: 1fr;">
+              <div class="ph ph-line" style="min-height:52px; flex:1;">④ Enrolments vs commencements — dual series, shared time axis (stock vs new starts)</div>
+            </div>
+
+            <div class="ph ph-small" style="margin-top:4px;">Footer row: definitions · data source · limitations (brief)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col" style="flex-shrink:0;">
+        <div class="section-card">
+          <h2>Recommended charts (this dashboard)</h2>
+          <ul>
+            <li>Total international enrolments — long-run line (COVID band)</li>
+            <li>Sector lines or stacked area — HE, VET, ELICOS, Schools</li>
+            <li>Commencements vs enrolments — aligned x-axis, legend in plain language</li>
+          </ul>
+          <p class="footer-note" style="border:0; padding:0; margin:0 0 4px; color:#006dae; font-weight:600;">Unique to Alt 2 (do not copy to Sheets 3–4): time + story + sectors + commence vs enrol only.</p>
+          <h3>More graph variants (narrative / time)</h3>
+          <ul class="compact-ul">
+            <li><strong>Era ribbon / Gantt strip:</strong> pre-COVID | acute disruption | recovery as labelled bands on the same time axis as enrolments.</li>
+            <li><strong>Slopegraph (sectors):</strong> left column = 2019 (or peak), right column = latest — one line per sector (HE/VET/ELICOS/Schools).</li>
+            <li><strong>Difference chart:</strong> actual enrolments minus a simple pre-COVID trend extrapolation (“gap vs counterfactual”).</li>
+            <li><strong>Cycle / seasonal plot:</strong> if monthly data — month-of-year lines with COVID years overlaid in bold.</li>
+          </ul>
+          <h3>Illustration ideas (story &amp; chapters)</h3>
+          <ul class="compact-ul">
+            <li><strong>Film-strip frames:</strong> three or four sketched panels under the main line = “Act I–III” for growth / shock / recovery.</li>
+            <li><strong>Journey path:</strong> single hand-drawn path narrowing through a “bottleneck” band then widening (metaphor only — keep subtle).</li>
+            <li><strong>Chapter tabs</strong> drawn as physical folder labels (no globe, no map — those belong to Alt 4).</li>
+          </ul>
+          <div class="graph-thumb-row graph-thumb-row--4" style="margin-top:4px;">
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><rect x="6" y="6" width="10" height="8" fill="#e8e8e8"/><rect x="18" y="8" width="8" height="6" fill="#ddd"/><rect x="28" y="5" width="8" height="9" fill="#e8e8e8"/><path d="M2 11 L38 9" fill="none" stroke="#006dae" stroke-width="1"/></svg>
+              Era + line
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M8 12 L8 6 M8 12 L32 14 M8 6 L32 4" stroke="#444" stroke-width="0.8"/><circle cx="8" cy="12" r="1.2" fill="#006dae"/><circle cx="8" cy="6" r="1.2" fill="#006dae"/><circle cx="32" cy="14" r="1.2" fill="#888"/><circle cx="32" cy="4" r="1.2" fill="#888"/></svg>
+              Sector slope
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M2 8 L38 8" stroke="#ccc"/><path d="M2 8 L38 10" fill="none" stroke="#006dae"/><path d="M2 8 L38 6" fill="none" stroke="#006dae" stroke-dasharray="2 1"/></svg>
+              Gap vs trend
+            </div>
+            <div class="graph-thumb">
+              <svg viewBox="0 0 40 18" aria-hidden="true"><path d="M4 14 L8 6 L12 12 L16 5 L20 13 L24 7 L28 11 L32 6 L36 12" fill="none" stroke="#888"/><circle cx="20" cy="5" r="2" fill="none" stroke="#c00"/></svg>
+              Seasonal web
+            </div>
+          </div>
+          <h2>Interaction ideas</h2>
+          <ul>
+            <li>Story mode buttons; tooltips with sector definitions</li>
+            <li>Highlight peak / trough / latest year on click</li>
+          </ul>
+        </div>
+        <div class="section-card">
+          <h2>Colour &amp; typography</h2>
+          <p>Neutral base timeline; distinct sector colours (colorblind-safe); light grey COVID band, not full-bleed red.</p>
+          <p>Large numbers only for 2–3 milestone years; sentence-case chart titles.</p>
+          <h2>Why this works / What to avoid</h2>
+          <p><strong>Works:</strong> Linear path lowers cognitive load; matches assignment themes (growth, COVID, sectors, commence vs enrol).</p>
+          <p><strong>Avoid:</strong> Too many y-axes; burying acronyms; claiming “full recovery” without defining baseline.</p>
+          <p class="footer-note" style="border:0; padding:0; margin-top:6px;"><strong>Draw on sheet:</strong> Number panels ①–④; add handwritten arrows between panels; on the margin, list Alt-2-only ideas (no overlap with 3/4).</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</body>
+</html>
