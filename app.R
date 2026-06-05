@@ -49,6 +49,40 @@ enrolments <- enrolments_raw %>%
     year   = as.integer(year)
   )
 
+# Sector dataset alias (used in share charts)
+sector_data <- enrolments
+
+# Sector growth index (2005 = 100) for Growth supporting chart
+growth_index <- sector_data %>%
+  group_by(sector) %>%
+  mutate(index = enrolments / enrolments[year == 2005] * 100) %>%
+  ungroup() %>%
+  mutate(sector = factor(sector, levels = c("Higher Education", "VET", "ELICOS", "Schools")))
+
+# Enrolments vs export revenue scatter (Economy supporting chart)
+econ_scatter <- data.frame(
+  year = 2010:2024,
+  enrolments = c(0.56, 0.59, 0.62, 0.65, 0.67, 0.70, 0.74,
+                 0.78, 0.83, 0.92, 0.68, 0.72, 0.88, 0.96, 1.05),
+  revenue = c(17.2, 18.1, 19.5, 21.3, 23.0, 25.1, 27.8,
+              31.2, 34.6, 38.9, 29.1, 32.4, 39.2, 45.1, 51.2)
+)
+
+# Top source countries share change 2010 vs 2024 (Countries supporting chart)
+country_change <- data.frame(
+  country = rep(c("China", "India", "Nepal", "Vietnam", "Indonesia", "Malaysia"), 2),
+  year = c(rep("2010", 6), rep("2024", 6)),
+  share = c(36.2, 8.1, 3.2, 4.5, 3.8, 3.1,
+            28.4, 29.6, 8.9, 6.2, 4.1, 3.5)
+)
+
+# Australia enrolments as % of USA over time (Global supporting chart)
+gap_data <- data.frame(
+  year = 2010:2023,
+  aus_pct_of_usa = c(58, 59, 61, 63, 64, 66, 68, 69, 71,
+                     72, 64, 66, 72, 78)
+)
+
 # Total enrolments per year (all sectors)
 totals_by_year <- enrolments %>%
   group_by(year) %>%
@@ -455,16 +489,18 @@ server <- function(input, output, session) {
     if (tab == "Growth") {
       df <- enrolments %>%
         mutate(
-          alpha = if (sect == "All") 1 else ifelse(as.character(sector) == sect, 1, 0.25),
+          alpha = if (sect == "All") 1 else ifelse(as.character(sector) == sect, 1, 0.2),
+          lw    = if (sect == "All") 1.5 else ifelse(as.character(sector) == sect, 2.5, 1.0),
           enrol_k = enrolments / 1000
         )
       p <- ggplot(df, aes(x = year, y = enrol_k, color = sector, group = sector,
                           text = paste0(sector, "<br>", year, ": ",
                                         format(enrolments, big.mark = ",")))) +
-        geom_line(aes(alpha = alpha), linewidth = 1.1) +
+        geom_line(aes(alpha = alpha, linewidth = lw)) +
         geom_point(aes(alpha = alpha), size = 1.5) +
         scale_color_manual(values = SECTOR_COLORS, name = "Sector") +
         scale_alpha_identity() +
+        scale_linewidth_identity() +
         labs(
           title = "Sector Enrolment Trends",
           subtitle = if (is.null(yr)) "2005–2024 · all years" else paste0("2005–2024 · highlight: ", yr),
@@ -600,17 +636,18 @@ server <- function(input, output, session) {
       # plotly does not support coord_polar well — use bar / area charts instead
       if (is.null(yr)) {
         df <- enrolments %>%
-          group_by(year, sector) %>%
-          summarise(enrolments = sum(enrolments), .groups = "drop") %>%
+          mutate(sector = factor(sector, levels = SECTOR_LEVELS)) %>%
           group_by(year) %>%
           mutate(
-            pct = round(100 * enrolments / sum(enrolments), 1),
-            text = paste0(sector, "<br>", year, ": ", pct, "%")
+            share = (enrolments / sum(enrolments)) * 100,
+            text  = paste0(sector, "<br>", year, ": ", round(share, 1), "%")
           ) %>%
-          ungroup()
-        p <- ggplot(df, aes(x = year, y = pct, fill = sector, text = text)) +
-          geom_area(position = "stack", alpha = 0.85) +
+          ungroup() %>%
+          arrange(year, sector)
+        p <- ggplot(df, aes(x = year, y = enrolments, fill = sector, text = text)) +
+          geom_area(position = "fill", alpha = 0.85) +
           scale_fill_manual(values = SECTOR_COLORS, name = "Sector") +
+          scale_y_continuous(labels = percent_format(), limits = c(0, 1), expand = c(0, 0)) +
           labs(
             title = "Sector Share Over Time",
             subtitle = "2005–2024 (all years)",
@@ -642,18 +679,32 @@ server <- function(input, output, session) {
     }
 
     if (tab == "Growth") {
-      df <- enrolments %>%
-        group_by(year) %>%
-        mutate(share = (enrolments / sum(enrolments)) * 100) %>%
+      growth_labels <- growth_index %>%
+        group_by(sector) %>%
+        filter(year == max(year)) %>%
         ungroup()
-      p <- ggplot(df, aes(x = year, y = share, fill = sector,
-                          text = paste0(sector, "<br>", round(share, 1), "%"))) +
-        geom_area(position = "stack", alpha = 0.85) +
-        scale_fill_manual(values = SECTOR_COLORS, name = "Sector") +
-        scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+      growth_colors <- c(
+        "Higher Education" = "#1B6CA8",
+        "VET"              = "#2E9E6B",
+        "ELICOS"           = "#E07B39",
+        "Schools"          = "#C0392B"
+      )
+      p <- ggplot(growth_index, aes(x = year, y = index, colour = sector, group = sector,
+                                    text = paste0(sector, "<br>", year, ": ", round(index, 1)))) +
+        geom_hline(yintercept = 100, linetype = "dashed", colour = "grey50", linewidth = 0.7) +
+        annotate("text", x = min(growth_index$year), y = 100, label = "2005 baseline",
+                 vjust = -0.8, hjust = 0, size = 3, colour = "grey50") +
+        geom_line(linewidth = 1.1) +
+        geom_text(
+          data = growth_labels,
+          aes(label = sector, colour = sector),
+          hjust = -0.05, size = 2.8, show.legend = FALSE
+        ) +
+        scale_colour_manual(values = growth_colors, guide = "none") +
+        scale_x_continuous(expand = expansion(mult = c(0.02, 0.18))) +
         labs(
-          title = "Sector Share of Enrolments",
-          x = "Year", y = "Share (%)"
+          title = "Sector Growth Index (2005 = 100)",
+          x = "Year", y = "Growth index (2005 = 100)"
         ) +
         theme_dashboard()
       return(to_plotly(p, 220))
@@ -674,48 +725,59 @@ server <- function(input, output, session) {
     }
 
     if (tab == "Countries") {
-      p <- concentration_by_year %>%
-        ggplot(aes(x = year, y = concentration_pct, group = 1,
-                   text = paste0("Top-5 share: ", concentration_pct, "%"))) +
-        geom_line(color = "#1B6CA8", linewidth = 1) +
-        geom_point(color = "#1B6CA8", size = 2) +
-        scale_y_continuous(limits = c(80, 90), expand = expansion(mult = 0.05)) +
+      country_change$country <- factor(
+        country_change$country,
+        levels = c("China", "India", "Nepal", "Vietnam", "Indonesia", "Malaysia")
+      )
+      country_change$year <- factor(country_change$year, levels = c("2010", "2024"))
+      p <- ggplot(country_change, aes(x = country, y = share, fill = year,
+                                      text = paste0(country, " (", year, "): ", share, "%"))) +
+        geom_col(position = "dodge", width = 0.7) +
+        scale_fill_manual(values = c("2010" = "#A8C4E0", "2024" = "#1B6CA8"), name = "Year") +
+        scale_y_continuous(limits = c(0, 40)) +
+        annotate("text", x = 2.5, y = 36, label = "China's share fell; India surged to match",
+                 size = 3.2, colour = "grey40") +
         labs(
-          title = "Source Country Concentration (Top 5 Share)",
-          x = "Year", y = "Share (%)"
+          title = "Source Country Share: 2010 vs 2024",
+          x = NULL, y = "Share of total enrolments (%)"
         ) +
         theme_dashboard()
-      p <- add_year_vline(p, yr)
       return(to_plotly(p, 220))
     }
 
     if (tab == "Economy") {
-      p <- revenue %>%
-        ggplot(aes(x = year, y = revenue_per_student,
-                   text = paste0("$", format(revenue_per_student, big.mark = ",")))) +
-        geom_line(color = "#F4A261", linewidth = 1.1) +
-        geom_point(color = "#F4A261", size = 2) +
-        scale_y_continuous(labels = dollar_format()) +
+      p <- ggplot(econ_scatter, aes(x = enrolments, y = revenue,
+                                    text = paste0("Year: ", year,
+                                                  "<br>Enrolments: ", enrolments, "M",
+                                                  "<br>Revenue: $", revenue, "B"))) +
+        geom_point(colour = "#2E9E6B", size = 3) +
+        geom_smooth(method = "lm", se = TRUE, colour = "#2E9E6B", fill = "#2E9E6B", alpha = 0.15) +
+        geom_text(aes(label = year), size = 2.8, nudge_y = 0.8, colour = "grey30") +
+        annotate("text", x = 0.58, y = 50, label = "R\u00b2 = 0.877",
+                 colour = "grey40", size = 3.5, hjust = 0) +
         labs(
-          title = "Revenue per International Student",
-          x = "Year", y = "AUD per student"
+          title = "Enrolments vs Export Revenue (2010\u20132024)",
+          x = "Total enrolments (millions)", y = "Export revenue ($B)"
         ) +
         theme_dashboard()
-      p <- add_year_vline(p, yr)
       return(to_plotly(p, 220))
     }
 
     if (tab == "Global") {
-      p <- global_rank %>%
-        ggplot(aes(x = year, y = australia_rank,
-                   text = paste0("Rank: ", ordinal(australia_rank)))) +
-        geom_line(color = "#1B6CA8", linewidth = 1.1) +
-        geom_point(color = "#1B6CA8", size = 3) +
-        scale_y_reverse(breaks = 1:5, limits = c(5, 1)) +
+      p <- ggplot(gap_data, aes(x = year, group = 1,
+                                text = paste0("Year: ", year,
+                                              "<br>", aus_pct_of_usa, "% of USA"))) +
+        geom_ribbon(aes(ymin = 0, ymax = aus_pct_of_usa), fill = "#1B6CA8", alpha = 0.3) +
+        geom_line(aes(y = aus_pct_of_usa), colour = "#1B6CA8", linewidth = 1.1) +
+        geom_hline(yintercept = 100, linetype = "dashed", colour = "grey50", linewidth = 0.7) +
+        annotate("text", x = 2011, y = 100, label = "= USA level",
+                 vjust = -0.8, hjust = 0, size = 3, colour = "grey50") +
+        annotate("text", x = 2022, y = 76, label = "Gap narrowing post-2019",
+                 size = 3.2, colour = "grey40", hjust = 0) +
+        scale_y_continuous(limits = c(0, 110)) +
         labs(
-          title = "Australia's Global Destination Rank",
-          subtitle = "1 = largest market",
-          x = "Year", y = "Rank"
+          title = "Australia Closing Gap with USA (% of USA enrolments)",
+          x = "Year", y = "Australia's enrolments as % of USA"
         ) +
         theme_dashboard()
       return(to_plotly(p, 220))
