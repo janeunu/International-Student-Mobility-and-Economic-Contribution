@@ -174,9 +174,10 @@ STORY_CONTENT <- list(
   ),
   Countries = list(
     main = paste(
-      "China and India dominate Australia's international student intake, together",
-      "accounting for a large share of enrolments. Nepal, Vietnam, and other markets",
-      "have grown rapidly, suggesting gradual diversification despite top-country concentration."
+      "India and China together dominate Australia's international student intake,",
+      "with India recently surpassing China as the top source country. Nepal, Vietnam,",
+      "and other markets have grown rapidly, suggesting gradual diversification despite",
+      "top-country concentration."
     ),
     why = paste(
       "Heavy reliance on a few source countries creates geopolitical and policy risk;",
@@ -384,7 +385,21 @@ server <- function(input, output, session) {
   output$kpi_row <- renderUI({
     yr_all <- year_is_all(input$filter_year)
     yr     <- kpi_lookup_year(input$filter_year)
-    yr_note <- if (yr_all) paste0("(ALL · ", yr, ")") else paste0("(", yr, ")")
+
+    # Build a filter label reflecting all active filters
+    filter_parts <- c()
+    if (!is.null(input$filter_sector) && input$filter_sector != "All")
+      filter_parts <- c(filter_parts, input$filter_sector)
+    if (!yr_all)
+      filter_parts <- c(filter_parts, as.character(yr))
+    if (!is.null(input$filter_country) && input$filter_country != "All")
+      filter_parts <- c(filter_parts, input$filter_country)
+
+    yr_note <- if (length(filter_parts) == 0) {
+      paste0("(ALL \u00b7 ", yr, " snapshot)")
+    } else {
+      paste0("(", paste(filter_parts, collapse = " \u00b7 "), ")")
+    }
 
     total_enr <- totals_by_year %>%
       filter(year == yr) %>%
@@ -481,6 +496,11 @@ server <- function(input, output, session) {
           x = "Year", y = "Enrolments (millions)"
         ) +
         scale_x_continuous(breaks = seq(2005, 2024, 3)) +
+        geom_vline(xintercept = 2020, linetype = "dashed",
+                   colour = "grey50", linewidth = 0.6) +
+        annotate("text", x = 2020.3, y = 0.05,
+                 label = "COVID-19\nborder closures",
+                 hjust = 0, size = 2.8, colour = "grey40") +
         theme_dashboard()
       p <- add_year_vline(p, yr)
       return(to_plotly(p, 340))
@@ -679,16 +699,25 @@ server <- function(input, output, session) {
     }
 
     if (tab == "Growth") {
-      growth_labels <- growth_index %>%
-        group_by(sector) %>%
-        filter(year == max(year)) %>%
-        ungroup()
       growth_colors <- c(
         "Higher Education" = "#1B6CA8",
         "VET"              = "#2E9E6B",
         "ELICOS"           = "#E07B39",
         "Schools"          = "#C0392B"
       )
+      # Stagger end-of-line labels to prevent overlap
+      nudge_lookup <- c(
+        "Higher Education" = 8,
+        "VET"              = 4,
+        "ELICOS"           = 0,
+        "Schools"          = -4
+      )
+      growth_labels <- growth_index %>%
+        group_by(sector) %>%
+        filter(year == max(year)) %>%
+        ungroup() %>%
+        mutate(nudge = nudge_lookup[as.character(sector)])
+
       p <- ggplot(growth_index, aes(x = year, y = index, colour = sector, group = sector,
                                     text = paste0(sector, "<br>", year, ": ", round(index, 1)))) +
         geom_hline(yintercept = 100, linetype = "dashed", colour = "grey50", linewidth = 0.7) +
@@ -697,7 +726,7 @@ server <- function(input, output, session) {
         geom_line(linewidth = 1.1) +
         geom_text(
           data = growth_labels,
-          aes(label = sector, colour = sector),
+          aes(label = sector, colour = sector, y = index + nudge),
           hjust = -0.05, size = 2.8, show.legend = FALSE
         ) +
         scale_colour_manual(values = growth_colors, guide = "none") +
@@ -706,7 +735,8 @@ server <- function(input, output, session) {
           title = "Sector Growth Index (2005 = 100)",
           x = "Year", y = "Growth index (2005 = 100)"
         ) +
-        theme_dashboard()
+        theme_dashboard() +
+        theme(plot.margin = margin(5, 5, 5, 60))
       return(to_plotly(p, 220))
     }
 
@@ -715,10 +745,27 @@ server <- function(input, output, session) {
         filter(year %in% c(2019, 2021, 2024)) %>%
         mutate(period = factor(year, levels = c(2019, 2021, 2024),
                               labels = c("Pre-COVID (2019)", "Trough (2021)", "Recovery (2024)")))
+
+      # Percentage drop labels for trough bars only
+      pct_drops <- data.frame(
+        sector  = factor(c("Higher Education", "VET", "ELICOS", "Schools"), levels = SECTOR_LEVELS),
+        period  = factor("Trough (2021)", levels = c("Pre-COVID (2019)", "Trough (2021)", "Recovery (2024)")),
+        label   = c("-23%", "-38%", "-35%", "-28%"),
+        y_pos   = c(380, 110, 85, 40)   # approximate heights above each bar
+      )
+
       p <- ggplot(recovery, aes(x = period, y = enrolments / 1000, fill = sector,
                                 text = paste0(sector, "<br>", format(enrolments, big.mark = ",")))) +
         geom_col(position = "dodge") +
+        geom_text(
+          data = pct_drops,
+          aes(x = period, y = y_pos, label = label, colour = sector),
+          position = position_dodge(width = 0.9),
+          size = 2.8, vjust = -0.3, fontface = "bold",
+          inherit.aes = FALSE, show.legend = FALSE
+        ) +
         scale_fill_manual(values = SECTOR_COLORS, name = "Sector") +
+        scale_colour_manual(values = SECTOR_COLORS, guide = "none") +
         labs(title = "Pre-COVID vs Trough vs Recovery", x = NULL, y = "Thousands") +
         theme_dashboard()
       return(to_plotly(p, 220))
@@ -735,8 +782,8 @@ server <- function(input, output, session) {
         geom_col(position = "dodge", width = 0.7) +
         scale_fill_manual(values = c("2010" = "#A8C4E0", "2024" = "#1B6CA8"), name = "Year") +
         scale_y_continuous(limits = c(0, 40)) +
-        annotate("text", x = 2.5, y = 36, label = "China's share fell; India surged to match",
-                 size = 3.2, colour = "grey40") +
+        annotate("text", x = 0.7, y = 38, label = "China's share fell;\nIndia surged to match",
+                 size = 3.0, colour = "grey40", hjust = 0) +
         labs(
           title = "Source Country Share: 2010 vs 2024",
           x = NULL, y = "Share of total enrolments (%)"
@@ -746,13 +793,18 @@ server <- function(input, output, session) {
     }
 
     if (tab == "Economy") {
+      label_years <- c(2010, 2013, 2016, 2019, 2021, 2024)
       p <- ggplot(econ_scatter, aes(x = enrolments, y = revenue,
                                     text = paste0("Year: ", year,
                                                   "<br>Enrolments: ", enrolments, "M",
                                                   "<br>Revenue: $", revenue, "B"))) +
+        geom_smooth(method = "lm", se = TRUE, colour = "#1B6CA8", fill = "#1B6CA8",
+                    alpha = 0.12, linewidth = 0.8) +
         geom_point(colour = "#2E9E6B", size = 3) +
-        geom_smooth(method = "lm", se = TRUE, colour = "#2E9E6B", fill = "#2E9E6B", alpha = 0.15) +
-        geom_text(aes(label = year), size = 2.8, nudge_y = 0.8, colour = "grey30") +
+        geom_text(
+          data = econ_scatter %>% dplyr::filter(year %in% label_years),
+          aes(label = year), size = 2.8, nudge_y = 0.8, colour = "grey30"
+        ) +
         annotate("text", x = 0.58, y = 50, label = "R\u00b2 = 0.877",
                  colour = "grey40", size = 3.5, hjust = 0) +
         labs(
@@ -770,16 +822,21 @@ server <- function(input, output, session) {
         geom_ribbon(aes(ymin = 0, ymax = aus_pct_of_usa), fill = "#1B6CA8", alpha = 0.3) +
         geom_line(aes(y = aus_pct_of_usa), colour = "#1B6CA8", linewidth = 1.1) +
         geom_hline(yintercept = 100, linetype = "dashed", colour = "grey50", linewidth = 0.7) +
-        annotate("text", x = 2011, y = 100, label = "= USA level",
-                 vjust = -0.8, hjust = 0, size = 3, colour = "grey50") +
-        annotate("text", x = 2022, y = 76, label = "Gap narrowing post-2019",
-                 size = 3.2, colour = "grey40", hjust = 0) +
+        annotate("text", x = min(gap_data$year) + 0.3, y = 103,
+                 label = "= USA level", vjust = 0, hjust = 0, size = 3, colour = "grey50") +
+        annotate("text", x = 2021, y = 72,
+                 label = "Gap narrowing\npost-2019",
+                 size = 3.2, colour = "#1B6CA8", hjust = 0) +
         scale_y_continuous(limits = c(0, 110)) +
         labs(
           title = "Australia Closing Gap with USA (% of USA enrolments)",
-          x = "Year", y = "Australia's enrolments as % of USA"
+          x = "Year", y = "% of USA enrolments"
         ) +
-        theme_dashboard()
+        theme_dashboard() +
+        theme(
+          axis.title.y = element_text(size = 9),
+          plot.margin  = margin(5, 5, 5, 70)
+        )
       return(to_plotly(p, 220))
     }
 
